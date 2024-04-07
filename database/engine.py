@@ -16,7 +16,15 @@ limitations under the License.
 
 """
 
-from bot.main import main as telegram_bot
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-if __name__ == '__main__':
-    telegram_bot()
+from config import DATABASE_FILE, SQLALCHEMY_DATABASE_URI
+from database.models import Base
+
+engine = create_engine(f'{SQLALCHEMY_DATABASE_URI}///{DATABASE_FILE}')
+
+Session = sessionmaker(bind=engine)
+session = Session()
+
+Base.metadata.create_all(engine)

@@ -31,7 +31,6 @@ English:
     Токен для доступа к Telegram Bot API.
 """
 
-
 # Replace this with real telegram chat id for administration
 # Замени это реальным идентификатором чата Telegram для администрации
 TELEGRAM_ADMIN = -1234567890123
@@ -51,28 +50,6 @@ English:
             Настоятельно рекомендуется использовать 64-битный тип данных.
 """
 
-# By default: 127.0.0.1
-BACKEND_URL = '127.0.0.1'
-"""
-English:
-    URL of the backend server.
-
-Русский:
-    URL адрес бекенд сервера
-"""
-
-
-# By default: 8000
-BACKEND_PORT = 8000
-"""
-English:
-    Port number for the backend server to listen on.
-
-Русский:
-    Номер порта для прослушивания внутреннего сервера.
-"""
-
-
 # By default: database.db
 DATABASE_FILE = 'database.db'
 """
@@ -82,7 +59,6 @@ English:
 Русский:
     Имя файла базы данных, используемой приложением.
 """
-
 
 # By default: False
 DEBUG = False
