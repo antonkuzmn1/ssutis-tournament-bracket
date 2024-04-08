@@ -16,19 +16,17 @@ limitations under the License.
 
 """
 
-import json
-
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-
 from telegram import Bot
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.constants import ParseMode
+
 from bot.tools.bridge import get_student
 from common.parser import parse_snpg
 from config import TELEGRAM_TOKEN
 from database.engine import session
+from database.models import Student
 
 bot = Bot(token=TELEGRAM_TOKEN)
-
-# await update.get_bot().set_my_name(name='ssutis_bot')
 
 
 async def request_snpg(update) -> None:
@@ -45,7 +43,7 @@ async def request_snpg(update) -> None:
     else:
         old_message = update.callback_query.message.text
         old_message += '\n\nВы: Нет, заполнить заново'
-        await update.callback_query.edit_message_text(text=old_message)
+        await update.callback_query.edit_message_text(text=old_message, parse_mode='markdown')
         await bot.send_message(chat_id=update.callback_query.message.chat.id, text=text)
 
 
@@ -93,19 +91,22 @@ async def request_validation(update) -> None:
     student.name = name
     student.patronymic = patronymic
     student.group = group
+    student.valid = 1
     session.commit()
     text = f'''
 Заявка отправлена:
 
+`
 Ф: {surname}
 И: {name}
 О: {patronymic}
 Г: {group}
+`
     '''
     old_message = update.callback_query.message.text
     old_message += '\n\nВы: Да, отправить на проверку'
-    await update.callback_query.edit_message_text(text=update.callback_query.message.text)
-    await bot.send_message(chat_id=update.callback_query.message.chat.id, text=text)
+    await update.callback_query.edit_message_text(text=old_message, parse_mode='markdown')
+    await bot.send_message(chat_id=update.callback_query.message.chat.id, text=text, parse_mode='markdown')
 
 
 async def validation_in_process(update) -> None:
@@ -113,33 +114,154 @@ async def validation_in_process(update) -> None:
     await bot.send_message(chat_id=update.effective_user.id, text=text)
 
 
-def main_menu(update, student):
-    var = None
-    student.location = 'main'
+async def main_menu(update) -> None:
+    applications = session.query(Student).filter_by(valid=1)
 
-    if student.valid:
-        return
+    keyboard = [
+        [InlineKeyboardButton(text=f'Заявки ({applications.count()})', callback_data='application_list')],
+        [InlineKeyboardButton(text='Список участников', callback_data='students_list')],
+        [InlineKeyboardButton(text='Турнир', callback_data='tournament')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    text = '**Главное меню**'
+
+    if update.callback_query:
+        await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode='markdown')
     else:
-        keyboard = [[InlineKeyboardButton("Изменить параметры", callback_data="set_params")]]
+        await bot.send_message(chat_id=update.message.chat.id, text=text, reply_markup=reply_markup,
+                               parse_mode='markdown')
 
-        if all([student.surname, student.name, student.patronymic, student.group]):
-            keyboard.append([InlineKeyboardButton("Отправить заявку", callback_data="pizda")])
 
-        message = f'''
-        **Главное меню**
-    
-        - Вы не являетесь подтвержденным пользователем.
-        - Неподтвержденные пользователи не могут принять участие в турнире.
-        - Чтоб исправить положение необходимо заполнить пустые поля ниже и отправить заявку на регистрацию.
-        - Для заполнения полей используйте кнопки под этим сообщением.
-        - Кнопка для отправки заявки появится если все поля будут заполнены.
-        
-        `
-        Ф: {student.surname}
-        И: {student.name}
-        О: {student.patronymic}
-        Г: {student.group}
-        `
-        '''
+async def application_list(update) -> None:
+    applications = session.query(Student).filter_by(valid=1)
 
-        update.message.reply_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='markdown')
+    keyboard = [
+        [InlineKeyboardButton(text='В главное меню', callback_data='main_menu')]
+    ]
+    for application in applications:
+        text = (f'{application.group} '
+                f'{application.surname} '
+                f'{application.name} '
+                f'{application.patronymic[0]}.')
+        callback_data = f'application_list_show={application.id}'
+        keyboard.append([InlineKeyboardButton(text=text, callback_data=callback_data)])
+    if len(keyboard) > 10:
+        keyboard.append([InlineKeyboardButton(text='В главное меню', callback_data='main_menu')])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    text = f'**Всего заявок: {applications.count()}**'
+
+    await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode='markdown')
+
+
+async def application_list_show(update) -> None:
+    student_id = update.callback_query.data.split('=')[1]
+    student = session.query(Student).get(student_id)
+    keyboard = [
+        [
+            InlineKeyboardButton(text='Назад', callback_data='application_list')
+        ],
+        [
+            InlineKeyboardButton(text='Отклонить', callback_data=f'application_list_reject={student.id}'),
+            InlineKeyboardButton(text='Принять', callback_data=f'application_list_accept={student.id}')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    url = str(student.url)
+    surname = str(student.surname)
+    name = str(student.name)
+    patronymic = str(student.patronymic)
+    group = str(student.group)
+
+    text = f'''
+<b>ФИО и Группа:</b>
+<code>Ф: {surname}
+И: {name}
+О: {patronymic}
+Г: {group}</code>
+
+<b>Telegram:</b>
+ID: <code>{student_id}</code>
+Tag: @{student.url}
+    '''
+
+    await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode='HTML')
+
+
+async def application_list_reject(update) -> None:
+    student_id = update.callback_query.data.split('=')[1]
+    student = session.query(Student).get(student_id)
+
+    text = f'''
+<b>Ваша заявка отклонена:</b>
+
+<code>Ф: {student.surname}
+И: {student.name}
+О: {student.patronymic}
+Г: {student.group}</code>
+    '''
+
+    student.surname = ''
+    student.name = ''
+    student.patronymic = ''
+    student.group = ''
+    student.valid = 0
+    session.commit()
+
+    await bot.send_message(chat_id=student_id, text=text, parse_mode='HTML')
+    await application_list(update)
+
+
+async def application_list_accept(update) -> None:
+    student_id = update.callback_query.data.split('=')[1]
+    student = session.query(Student).get(student_id)
+
+    keyboard = [
+        [
+            InlineKeyboardButton(text='В главное меню', callback_data='student_main')
+        ],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    text = f'''
+<b>Ваша заявка одобрена:</b>
+
+<code>Ф: {student.surname}
+И: {student.name}
+О: {student.patronymic}
+Г: {student.group}</code>
+    '''
+
+    student.valid = 2
+    session.commit()
+
+    await bot.send_message(chat_id=student_id, text=text, reply_markup=reply_markup, parse_mode='HTML')
+    await application_list(update)
+    await update_bot_name(update)
+
+
+async def student_main(update) -> None:
+    keyboard = [
+        [
+            InlineKeyboardButton(text='Турнир', callback_data='?')
+        ],
+        [
+            InlineKeyboardButton(text='Участники', callback_data='?')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    text = '<b>Главное меню</b>'
+
+    await update.callback_query.message.reply_text(text=text, reply_markup=reply_markup, parse_mode='HTML')
+
+
+async def update_bot_name(update) -> None:
+    students = session.query(Student).filter_by(valid=2)
+    count = students.count()
+    name = f'Осталось мест: {64 - count}'
+    if count >= 64:
+        name = 'Регистрация закрыта'
+    await update.get_bot().set_my_name(name=name)

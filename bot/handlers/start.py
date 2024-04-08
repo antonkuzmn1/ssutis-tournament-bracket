@@ -19,10 +19,11 @@ limitations under the License.
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import TELEGRAM_ADMIN
 from bot.tools.bridge import get_student
-from bot.tools.methods import request_snpg, validation_in_process
+from bot.tools.methods import request_snpg, validation_in_process, main_menu, student_main
 from bot.tools.tg_log import log_start
+from bot.tools.timeout import check
+from config import TELEGRAM_ADMIN
 
 
 # noinspection PyUnusedLocal
@@ -32,13 +33,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     student = get_student(update)
 
     if update.message.chat.id == TELEGRAM_ADMIN:
-        await update.message.reply_text("not working yet")
+        await main_menu(update)
         return
 
     else:
-        if student.surname == '':
-            await request_snpg(update)
-            return
         if student.valid == 0:
-            await validation_in_process(update)
+            if student.surname == '':
+                await request_snpg(update)
+                return
+        if student.valid == 1:
+            if check(update):
+                await validation_in_process(update)
+            return
+        if student.valid == 2:
+            await student_main(update)
+            return
+        else:
             return
