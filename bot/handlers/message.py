@@ -30,23 +30,22 @@ from config import TELEGRAM_ADMIN
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
     await log_message(__name__, update)
-    student = get_student(update)
+    _VALID: str = get_student(update).valid
 
     if update.message.chat.id == TELEGRAM_ADMIN:
         await main_menu(update)
-        return
 
     else:
-        if student.valid == 0:
-            if student.surname == '':
-                await confirm_snpg(update)
-                return
-        if student.valid == 1:
-            if check(update):
-                await validation_in_process(update)
+        if _VALID == 0:
+            await confirm_snpg(update)
             return
-        if student.valid == 2:
+
+        if _VALID == 1:
+            await validation_in_process(update)
+            return
+
+        if _VALID == 2:
             await student_main(update)
             return
-        else:
-            return
+
+    return

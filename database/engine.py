@@ -25,6 +25,6 @@ from database.models import Base
 engine = create_engine(f'{SQLALCHEMY_DATABASE_URI}///{DATABASE_FILE}')
 
 Session = sessionmaker(bind=engine)
-session = Session()
+SESSION = Session()
 
 Base.metadata.create_all(engine)

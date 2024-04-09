@@ -16,7 +16,7 @@ limitations under the License.
 
 """
 
-from database.engine import session
+from database.engine import SESSION
 from database.models import Student
 
 
@@ -26,22 +26,22 @@ def get_student(update):
     :param update: Update handler by Telegram API
     :return: ``Student`` -- Student alchemy model
     """
-    student_id = update.effective_user.id
-    student_url = update.effective_user.username
+    _ID: int = update.effective_user.id
+    _URL: str = update.effective_user.username
 
-    student = session.query(Student).get(student_id)
+    student = SESSION.query(Student).get(_ID)
     if student is None:
-        new_student = Student(id=student_id,
-                              url=student_url,
-                              surname='',
-                              name='',
-                              patronymic='',
-                              group='',
-                              location='main',
-                              valid=0)
-        session.add(new_student)
-        session.commit()
-        return session.query(Student).get(student_id)
-    student.url = student_url
-    session.commit()
+        _NEW_STUDENT = Student(id=_ID,
+                               url=_URL,
+                               surname='',
+                               name='',
+                               patronymic='',
+                               group='',
+                               location='main',
+                               valid=0)
+        SESSION.add(_NEW_STUDENT)
+        SESSION.commit()
+        return SESSION.query(Student).get(_ID)
+    student.url = _URL
+    SESSION.commit()
     return student

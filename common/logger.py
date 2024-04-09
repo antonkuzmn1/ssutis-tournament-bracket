@@ -22,11 +22,11 @@ from config import LOGGING_FILE_HANDLER, LOGGING_FORMAT_TEMPLATE
 
 formatter = logging.Formatter(LOGGING_FORMAT_TEMPLATE)
 
-file_handler = logging.FileHandler(LOGGING_FILE_HANDLER)
-file_handler.setFormatter(formatter)
+FILE_HANDLER = logging.FileHandler(LOGGING_FILE_HANDLER)
+FILE_HANDLER.setFormatter(formatter)
 
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
+CONSOLE_HANDLER = logging.StreamHandler()
+CONSOLE_HANDLER.setFormatter(formatter)
 
 
 def log(name: str, text: str) -> None:
@@ -43,13 +43,13 @@ def log(name: str, text: str) -> None:
     Returns:
         None
     """
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    _LOGGER = logging.getLogger(name)
+    _LOGGER.setLevel(logging.INFO)
 
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
+    for _HADLER in _LOGGER.handlers[:]:
+        _LOGGER.removeHandler(_HADLER)
 
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+    _LOGGER.addHandler(FILE_HANDLER)
+    _LOGGER.addHandler(CONSOLE_HANDLER)
 
-    logger.info(text)
+    _LOGGER.info(text)

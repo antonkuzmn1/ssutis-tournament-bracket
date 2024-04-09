@@ -27,7 +27,7 @@ from bot.tools.methods import (request_snpg,
                                application_list,
                                application_list_show,
                                application_list_reject,
-                               application_list_accept, student_main)
+                               application_list_accept, student_main, students_list, students_list_show)
 from bot.tools.tg_log import log_callback
 from bot.tools.timeout import check
 from config import TELEGRAM_ADMIN
@@ -37,49 +37,57 @@ from config import TELEGRAM_ADMIN
 async def callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Parses the CallbackQuery and updates the message text."""
     await log_callback(__name__, update)
-    student = get_student(update)
-    data = update.callback_query.data
+    _VALID: int = get_student(update).valid
+    _DATA: str = update.callback_query.data
+    _SPLIT: str = _DATA.split('=')[0]
 
     if update.callback_query.message.chat.id == TELEGRAM_ADMIN:
-        if data == 'application_list':
+        if _DATA == 'application_list':
             await application_list(update)
             return
-        if data == 'main_menu':
+        if _DATA == 'main_menu':
             await main_menu(update)
             return
-        if data.split('=')[0] == 'application_list_show':
+        if _DATA == 'students_list':
+            await students_list(update)
+            return
+        if _SPLIT == 'application_list_show':
             await application_list_show(update)
             return
-        if data.split('=')[0] == 'application_list_reject':
+        if _SPLIT == 'application_list_reject':
             await application_list_reject(update)
             return
-        if data.split('=')[0] == 'application_list_accept':
+        if _SPLIT == 'application_list_accept':
             await application_list_accept(update)
             return
-        else:
-            await main_menu(update)
+        if _SPLIT == 'students_list_show':
+            await students_list_show(update)
             return
+        await main_menu(update)
 
     else:
-        if student.valid == 0:
-            if data == 'request_snpg':
+        if _VALID == 0:
+            if _DATA == 'request_snpg':
                 await request_snpg(update)
                 return
-            if data == 'request_validation':
+            if _DATA == 'request_validation':
                 await request_validation(update)
                 return
-            else:
-                return
-        if student.valid == 1:
+
+        if _VALID == 1:
             if check(update):
                 await validation_in_process(update)
-            return
-        if student.valid == 2:
-            if data == 'student_main':
+
+        if _VALID == 2:
+            if _DATA == 'student_main':
                 await student_main(update)
                 return
-            else:
-                await student_main(update)
+            if _DATA == 'students_list':
+                await students_list(update)
                 return
-        else:
-            return
+            if _SPLIT == 'students_list_show':
+                await students_list_show(update)
+                return
+            await student_main(update)
+
+    return

@@ -30,10 +30,10 @@ def main() -> None:
     """Start the bot."""
     log(__name__, 'Telegram-bot started')
 
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
+    _APP = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
-    application.add_handler(CallbackQueryHandler(callback))
+    _APP.add_handler(CommandHandler("start", start))
+    _APP.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
+    _APP.add_handler(CallbackQueryHandler(callback))
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    _APP.run_polling(allowed_updates=Update.ALL_TYPES)
