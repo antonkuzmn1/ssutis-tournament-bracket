@@ -22,7 +22,6 @@ from telegram.ext import ContextTypes
 from bot.tools.bridge import get_student
 from bot.tools.methods import confirm_snpg, validation_in_process, main_menu, student_main
 from bot.tools.tg_log import log_message
-from bot.tools.timeout import check
 from config import TELEGRAM_ADMIN
 
 
@@ -30,22 +29,17 @@ from config import TELEGRAM_ADMIN
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
     await log_message(__name__, update)
-    _VALID: str = get_student(update).valid
 
     if update.message.chat.id == TELEGRAM_ADMIN:
         await main_menu(update)
 
     else:
-        if _VALID == 0:
-            await confirm_snpg(update)
-            return
+        match get_student(update).valid:
+            case 0:
+                await confirm_snpg(update)
 
-        if _VALID == 1:
-            await validation_in_process(update)
-            return
+            case 1:
+                await validation_in_process(update)
 
-        if _VALID == 2:
-            await student_main(update)
-            return
-
-    return
+            case 2:
+                await student_main(update)

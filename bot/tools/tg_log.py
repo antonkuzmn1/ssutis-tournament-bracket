@@ -54,7 +54,7 @@ async def log_message(name, update) -> None:
     """
     _USERNAME: str = update.effective_user.username
     _ID: str = update.effective_user.id
-    _TEXT: str = update.message._TEXT
+    _TEXT: str = update.message.text
     log(name, f'message from {_USERNAME}(id={_ID}): {_TEXT}')
     await _tg_log(update)
 

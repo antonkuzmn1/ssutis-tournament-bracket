@@ -46,7 +46,7 @@ async def request_snpg(update) -> None:
     if update.message:
         await update.message.reply_text(text=_TEXT)
     else:
-        old_message = update.callback_query.message._TEXT
+        old_message = update.callback_query.message.text
         old_message += '\n\nВы: Нет, заполнить заново'
         await update.callback_query.edit_message_text(text=old_message, parse_mode='markdown')
         await _BOT.send_message(chat_id=update.callback_query.message.chat.id, text=_TEXT)
@@ -64,7 +64,7 @@ async def confirm_snpg(update) -> None:
     ]
     _REPLY_MARKUP = InlineKeyboardMarkup(_KEYBOARD)
 
-    _PARSED_SNPG = parse_snpg(update.message._TEXT)
+    _PARSED_SNPG = parse_snpg(update.message.text)
     _SURNAME: str = _PARSED_SNPG['surname']
     _NAME: str = _PARSED_SNPG['name']
     _PATRONYMIC: str = _PARSED_SNPG['patronymic']
@@ -97,18 +97,18 @@ async def request_validation(update) -> None:
     :return: 
     """
 
-    _DEPTH1 = update.callback_query.message._TEXT.split('\n')
+    _DEPTH1 = update.callback_query.message.text.split('\n')
     _SURNAME: str = _DEPTH1[3].split(': ')[1]
     _NAME: str = _DEPTH1[4].split(': ')[1]
     _PATRONYMIC: str = _DEPTH1[5].split(': ')[1]
     _GROUP: str = _DEPTH1[6].split(': ')[1]
 
-    student = get_student(update)
-    student.surname = _SURNAME
-    student.name = _NAME
-    student.patronymic = _PATRONYMIC
-    student.group = _GROUP
-    student.valid = 1
+    _STUDENT = get_student(update)
+    _STUDENT.surname = _SURNAME
+    _STUDENT.name = _NAME
+    _STUDENT.patronymic = _PATRONYMIC
+    _STUDENT.group = _GROUP
+    _STUDENT.valid = 1
     SESSION.commit()
 
     _TEXT: str = f'''
@@ -122,9 +122,8 @@ async def request_validation(update) -> None:
 `
     '''
 
-    old_message: str = update.callback_query.message._TEXT
-    old_message += '\n\nВы: Да, отправить на проверку'
-    await update.callback_query.edit_message_text(text=old_message, parse_mode='markdown')
+    _OLD_MESSAGE: str = f'{update.callback_query.message.text}\n\nВы: Да, отправить на проверку'
+    await update.callback_query.edit_message_text(text=_OLD_MESSAGE, parse_mode='markdown')
     await _BOT.send_message(chat_id=update.callback_query.message.chat.id, text=_TEXT, parse_mode='markdown')
 
 
@@ -171,7 +170,7 @@ async def application_list(update) -> None:
     """
     _REQUESTS = SESSION.query(Student).filter_by(valid=1)
 
-    _keyboard = [
+    _KEYBOARD = [
         [InlineKeyboardButton(text='В главное меню', callback_data='main_menu')]
     ]
     for _REQUEST in _REQUESTS:
@@ -180,10 +179,10 @@ async def application_list(update) -> None:
                       f'{_REQUEST.name} '
                       f'{_REQUEST.patronymic[0]}.')
         _CALLBACK_DATA = f'application_list_show={_REQUEST.id}'
-        _keyboard.append([InlineKeyboardButton(text=_TEXT, callback_data=_CALLBACK_DATA)])
-    if len(_keyboard) > 10:
-        _keyboard.append([InlineKeyboardButton(text='В главное меню', callback_data='main_menu')])
-    _REPLY_MARKUP = InlineKeyboardMarkup(_keyboard)
+        _KEYBOARD.append([InlineKeyboardButton(text=_TEXT, callback_data=_CALLBACK_DATA)])
+    if len(_KEYBOARD) > 10:
+        _KEYBOARD.append([InlineKeyboardButton(text='В главное меню', callback_data='main_menu')])
+    _REPLY_MARKUP = InlineKeyboardMarkup(_KEYBOARD)
 
     _TEXT = f'**Всего заявок: {_REQUESTS.count()}**'
 
