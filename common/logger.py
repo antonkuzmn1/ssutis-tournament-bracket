@@ -16,20 +16,20 @@ limitations under the License.
 
 """
 
-import logging
+from logging import Formatter, FileHandler, StreamHandler, getLogger, WARNING
 
 from config import LOGGING_FILE_HANDLER, LOGGING_FORMAT_TEMPLATE
 
-formatter = logging.Formatter(LOGGING_FORMAT_TEMPLATE)
+FORMATTER: Formatter = Formatter(LOGGING_FORMAT_TEMPLATE)
 
-FILE_HANDLER = logging.FileHandler(LOGGING_FILE_HANDLER)
-FILE_HANDLER.setFormatter(formatter)
+FILE_HANDLER: FileHandler = FileHandler(LOGGING_FILE_HANDLER)
+FILE_HANDLER.setFormatter(FORMATTER)
 
-CONSOLE_HANDLER = logging.StreamHandler()
-CONSOLE_HANDLER.setFormatter(formatter)
+CONSOLE_HANDLER: StreamHandler = StreamHandler()
+CONSOLE_HANDLER.setFormatter(FORMATTER)
 
 
-def log(name: str, text: str) -> None:
+def log(text: str) -> None:
     """
     Configure logging for the application.
 
@@ -37,19 +37,23 @@ def log(name: str, text: str) -> None:
     It creates a logger with the specified name and logs the given text using the configured handlers.
 
     Parameters:
-        name: str - The name of the logger.
         text: str - The text message to be logged.
 
     Returns:
         None
     """
-    _LOGGER = logging.getLogger(name)
-    _LOGGER.setLevel(logging.INFO)
+    LOGGER = getLogger()
+    LOGGER.setLevel(WARNING)
 
-    for _HADLER in _LOGGER.handlers[:]:
-        _LOGGER.removeHandler(_HADLER)
+    for HANDLER in LOGGER.handlers[:]:
+        LOGGER.removeHandler(HANDLER)
 
-    _LOGGER.addHandler(FILE_HANDLER)
-    _LOGGER.addHandler(CONSOLE_HANDLER)
+    LOGGER.addHandler(FILE_HANDLER)
+    LOGGER.addHandler(CONSOLE_HANDLER)
 
-    _LOGGER.info(text)
+    LOGGER.warning(text)
+
+
+if __name__ == "__main__":
+    """local test"""
+    log("Test passed")

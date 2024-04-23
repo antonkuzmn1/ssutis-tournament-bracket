@@ -28,12 +28,12 @@ from config import TELEGRAM_TOKEN
 
 def main() -> None:
     """Start the bot."""
-    log(__name__, 'Telegram-bot started')
+    log('Telegram-bot started')
 
-    _APP = Application.builder().token(TELEGRAM_TOKEN).build()
+    APP = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    _APP.add_handler(CommandHandler("start", start))
-    _APP.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
-    _APP.add_handler(CallbackQueryHandler(callback))
+    APP.add_handler(CommandHandler("start", start))
+    APP.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
+    APP.add_handler(CallbackQueryHandler(callback))
 
-    _APP.run_polling(allowed_updates=Update.ALL_TYPES)
+    APP.run_polling(allowed_updates=Update.ALL_TYPES)

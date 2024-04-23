@@ -15,31 +15,43 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 """
+import json
 
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from bot.tools.bridge import get_student
-from bot.tools.methods import confirm_snpg, validation_in_process, main_menu, student_main
-from bot.tools.tg_log import log_message
+from bot.tools.tg_log import log
+from bot.tools.user_methods import UserMethods
 from config import TELEGRAM_ADMIN
 
 
 # noinspection PyUnusedLocal
+async def _admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    return
+
+
+# noinspection PyUnusedLocal
+async def _user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    return
+    # match (await get_student(update)).valid:
+    #     case 0:
+    #         await confirm_snpg(update)
+    #     case 1:
+    #         await validation_in_process(update)
+    #     case 2:
+    #         return
+    #     case _:
+    #         return
+
+
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
-    await log_message(__name__, update)
+    await log(update=update, context=context)
+    # print(json.dumps(update.to_dict(), ensure_ascii=False, indent=4))
 
-    if update.message.chat.id == TELEGRAM_ADMIN:
-        await main_menu(update)
+    ID: int = update.message.chat.id
 
+    if ID == TELEGRAM_ADMIN:
+        await _admin(update, context)
     else:
-        match get_student(update).valid:
-            case 0:
-                await confirm_snpg(update)
-
-            case 1:
-                await validation_in_process(update)
-
-            case 2:
-                await student_main(update)
+        await UserMethods(update, context).entry()

@@ -18,55 +18,36 @@ limitations under the License.
 
 import json
 
-from telegram import Bot
+from telegram import Bot, Update
+from telegram.ext import ContextTypes
 
-from common.logger import log
+from common.logger import log as logger
 from config import TELEGRAM_TOKEN, TELEGRAM_LOG
 
 
-async def _tg_log(update) -> None:
+async def _tg_log(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
+    
     make log into logging telegram chat
     :param update:
+    :param context:
+    
     """
-    _BOT = Bot(token=TELEGRAM_TOKEN)
-    _TEXT: str = f'```json\n{json.dumps(update.to_dict(), ensure_ascii=False, indent=4)}```'
-    await _BOT.send_message(chat_id=TELEGRAM_LOG, text=_TEXT, parse_mode='markdown')
+    TEXT: str = f'```json\n{json.dumps(update.to_dict(), ensure_ascii=False, indent=4)}```'
+    if len(TEXT) < 4096:
+        await context.bot.send_message(chat_id=TELEGRAM_LOG, text=TEXT, parse_mode='markdown')
 
 
-async def log_start(name, update) -> None:
+async def log(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    log for start handler
-    :param name:
+    
+    log for all handlers
     :param update:
+    :param context:
+    
     """
-    _USERNAME: str = update.effective_user.username
-    _ID: str = update.effective_user.id
-    log(name, f'started by {_USERNAME}(id={_ID})')
-    await _tg_log(update)
-
-
-async def log_message(name, update) -> None:
-    """
-    log for message handler
-    :param name:
-    :param update:
-    """
-    _USERNAME: str = update.effective_user.username
-    _ID: str = update.effective_user.id
-    _TEXT: str = update.message.text
-    log(name, f'message from {_USERNAME}(id={_ID}): {_TEXT}')
-    await _tg_log(update)
-
-
-async def log_callback(name, update) -> None:
-    """
-    log for callback handler
-    :param name:
-    :param update:
-    """
-    _USERNAME: str = update.effective_user.username
-    _ID: str = update.effective_user.id
-    _DATA: str = update.callback_query.data
-    log(name, f'callback querry from {_USERNAME}(id={_ID}): {_DATA}')
-    await _tg_log(update)
+    USERNAME: str = update.effective_user.username
+    ID: int = update.effective_user.id
+    DATA: str = update.callback_query.data if update.callback_query is not None else update.message.text
+    logger(f'{USERNAME}(id={ID}): {DATA}')
+    await _tg_log(update, context)

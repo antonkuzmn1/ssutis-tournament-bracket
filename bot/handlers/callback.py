@@ -19,66 +19,82 @@ limitations under the License.
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from bot.tools.bridge import get_student
-from bot.tools.methods import (request_snpg,
-                               request_validation,
-                               validation_in_process,
-                               main_menu,
-                               application_list,
-                               application_list_show,
-                               application_list_reject,
-                               application_list_accept, student_main, students_list, students_list_show)
-from bot.tools.tg_log import log_callback
-from bot.tools.timeout import check
+from bot.tools.tg_log import log
+from bot.tools.user_methods import UserMethods
 from config import TELEGRAM_ADMIN
 
 
 # noinspection PyUnusedLocal
+async def _admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    return
+    # DATA: str = update.callback_query.data.split('=')[0]
+    # match DATA:
+    #     case 'application_list':
+    #         await application_list(update)
+    #     case 'main_menu':
+    #         await main_menu(update)
+    #     case 'students_list':
+    #         await students_list(update)
+    #     case 'application_list_show':
+    #         await application_list_show(update)
+    #     case 'application_list_reject':
+    #         await application_list_reject(update)
+    #     case 'application_list_accept':
+    #         await application_list_accept(update)
+    #     case 'students_list_show':
+    #         await students_list_show(update)
+    #     case 'tb_engine':
+    #         await tb_engine(update, context)
+    #     case _:
+    #         await main_menu(update)
+
+
+# noinspection PyUnusedLocal
+async def _user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    return
+    # DATA: str = update.callback_query.data.split('=')[0]
+    # match (await get_student(update)).valid:
+    #     case 0:
+    #         match DATA:
+    #             case 'request_snpg':
+    #                 await request_snpg(update)
+    #             case 'request_validation':
+    #                 await request_validation(update)
+    #             case _:
+    #                 return
+    #     case 1:
+    #         if check(update):
+    #             await validation_in_process(update)
+    #         else:
+    #             return
+    #     case 2:
+    #         match DATA:
+    #             case 'student_main':
+    #                 await student_main(update)
+    #             case 'students_list':
+    #                 await students_list(update)
+    #             case 'students_list_show':
+    #                 await students_list_show(update)
+    #             case 'tb_engine':
+    #                 await tb_engine(update=update, context=context)
+    #             case _:
+    #                 await student_main(update)
+    #     case _:
+    #         return
+
+
 async def callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Parses the CallbackQuery and updates the message text."""
-    await log_callback(__name__, update)
+    await log(update=update, context=context)
+    # print(json.dumps(update.to_dict(), ensure_ascii=False, indent=4))
 
-    _DATA: str = update.callback_query.data.split('=')[0]
-
-    if update.callback_query.message.chat.id == TELEGRAM_ADMIN:
-        match _DATA:
-            case 'application_list':
-                await application_list(update)
-            case 'main_menu':
-                await main_menu(update)
-            case 'students_list':
-                await students_list(update)
-            case 'application_list_show':
-                await application_list_show(update)
-            case 'application_list_reject':
-                await application_list_reject(update)
-            case 'application_list_accept':
-                await application_list_accept(update)
-            case 'students_list_show':
-                await students_list_show(update)
-            case _:
-                await main_menu(update)
-
+    # DATA: str = update.callback_query.data.split('=')[0]
+    ID: int = update.callback_query.message.chat.id
+    #
+    # if DATA == 'no_action':
+    #     return
+    #
+    if ID == TELEGRAM_ADMIN:
+        await _admin(update, context)
     else:
-        match get_student(update).valid:
-            case 0:
-                match _DATA:
-                    case 'request_snpg':
-                        await request_snpg(update)
-                    case 'request_validation':
-                        await request_validation(update)
-
-            case 1:
-                if check(update):
-                    await validation_in_process(update)
-
-            case 2:
-                match _DATA:
-                    case 'student_main':
-                        await student_main(update)
-                    case 'students_list':
-                        await students_list(update)
-                    case 'students_list_show':
-                        await students_list_show(update)
-                    case _:
-                        await student_main(update)
+        await UserMethods(update, context).entry()

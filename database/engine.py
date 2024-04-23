@@ -20,11 +20,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import DATABASE_FILE, SQLALCHEMY_DATABASE_URI
-from database.models import Base
+from database.models import _BASE
 
-engine = create_engine(f'{SQLALCHEMY_DATABASE_URI}///{DATABASE_FILE}')
+_ENGINE = create_engine(f'{SQLALCHEMY_DATABASE_URI}///{DATABASE_FILE}')
 
-Session = sessionmaker(bind=engine)
-SESSION = Session()
+Session = sessionmaker(bind=_ENGINE)
+SESSION = Session()  # export
 
-Base.metadata.create_all(engine)
+_BASE.metadata.create_all(_ENGINE)

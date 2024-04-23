@@ -17,37 +17,39 @@ limitations under the License.
 """
 
 import re
-from config import DEBUG
 
 
-def _parse_name(value):
+# from config import DEBUG
+
+
+def _parse_name(value) -> str:
     """
     patternt
     :param value:
     :return:
     """
-    return re.match(r'[а-яА-Я]{2,30}', value, re.IGNORECASE).group().title()
+    return re.match(r'[а-яА-Я-]{2,30}', value, re.IGNORECASE).group().title()
 
 
-def _parse_group(value):
+def _parse_group(value) -> str:
     """
     pattern
     :param value:
     :return:
     """
-    _WITH_DASH = re.match(r'[а-яА-Я]{1,4}-\d{1,4}', value, re.IGNORECASE)
-    _WITHOUT_DASH = re.match(r'([а-яА-Я]{1,4})(\d{1,4})', value, re.IGNORECASE)
+    WITH_DASH = re.match(r'[а-яА-Я]{1,4}-\d{1,4}', value, re.IGNORECASE)
+    WITHOUT_DASH = re.match(r'([а-яА-Я]{1,4})(\d{1,4})', value, re.IGNORECASE)
 
-    if _WITH_DASH:
-        return _WITH_DASH.group().upper()
+    if WITH_DASH:
+        return WITH_DASH.group().upper()
 
-    if _WITHOUT_DASH:
-        _CHARS = _WITHOUT_DASH.group(1).upper()
-        _DIGITS = _WITHOUT_DASH.group(2)
-        return f'{_CHARS}-{_DIGITS}'
+    if WITHOUT_DASH:
+        CHARS = WITHOUT_DASH.group(1).upper()
+        DIGITS = WITHOUT_DASH.group(2)
+        return f'{CHARS}-{DIGITS}'
 
 
-def parse_snpg(value):
+def parse_snpg(value) -> dict[str, str] | bool:
     """
     Example N1:
         - input -- иванов ИВан иваНОВИЧ аа111
@@ -57,58 +59,71 @@ def parse_snpg(value):
         - input -- иванов ИВан аа-111
         - return -- {"surname":"Иванов","name":"Иван","patronymic":"-","group": "АА-111"}
     """
-    result = dict(
-        surname="",
-        name="",
-        patronymic="",
-        group=""
-    )
+    try:
+        result = dict(
+            surname="",
+            name="",
+            patronymic="",
+            group="",
+            nickname=""
+        )
 
-    if DEBUG:
-        print('text:', value)
+        DEBUG = True
 
-    _WORDS = value.split(' ')
-    if DEBUG:
-        print('len:', len(_WORDS))
-        print('words:', _WORDS)
+        if DEBUG:
+            print('text:', value)
 
-    if len(_WORDS) not in [3, 4]:
-        return result
+        SEPARATED_NICKNAME = value.split('\n')
+        if DEBUG:
+            print(SEPARATED_NICKNAME)
+            print('nick:', SEPARATED_NICKNAME[1])
 
-    _SURNAME: str = _parse_name(_WORDS[0])
-    if DEBUG:
-        print('S:', _SURNAME)
+        WORDS = SEPARATED_NICKNAME[0].split(' ')
+        if DEBUG:
+            print('len:', len(WORDS))
+            print('words:', WORDS)
 
-    _NAME: str = _parse_name(_WORDS[1])
-    if DEBUG:
-        print('N:', _NAME)
+        if len(WORDS) not in [3, 4]:
+            return result
 
-    _PATRONYMIC: str = _parse_name(_WORDS[2]) if len(_WORDS) == 4 else '-'
-    if DEBUG:
-        print('P:', _PATRONYMIC)
+        SURNAME: str = _parse_name(WORDS[0])
+        if DEBUG:
+            print('S:', SURNAME)
 
-    _RAW_GROUP: str = _WORDS[3] if len(_WORDS) == 4 else _WORDS[2]
-    _PARSED_GROUP: str = _parse_group(_RAW_GROUP)
-    if DEBUG:
-        print('G:', _PARSED_GROUP)
+        NAME: str = _parse_name(WORDS[1])
+        if DEBUG:
+            print('N:', NAME)
 
-    if all([_SURNAME, _NAME, _PATRONYMIC, _PARSED_GROUP != '']):
-        if all([_SURNAME, _NAME, _PATRONYMIC, _PARSED_GROUP is not None]):
-            result['surname'] = _SURNAME
-            result['name'] = _NAME
-            result['patronymic'] = _PATRONYMIC
-            result['group'] = _PARSED_GROUP
+        PATRONYMIC: str = _parse_name(WORDS[2]) if len(WORDS) == 4 else '-'
+        if DEBUG:
+            print('P:', PATRONYMIC)
 
-    return result
+        RAW_GROUP: str = WORDS[3] if len(WORDS) == 4 else WORDS[2]
+        PARSED_GROUP: str = _parse_group(RAW_GROUP)
+        if DEBUG:
+            print('G:', PARSED_GROUP)
+
+        if all([SURNAME, NAME, PATRONYMIC, PARSED_GROUP != '']):
+            if all([SURNAME, NAME, PATRONYMIC, PARSED_GROUP is not None]):
+                result['surname'] = SURNAME
+                result['name'] = NAME
+                result['patronymic'] = PATRONYMIC
+                result['group'] = PARSED_GROUP
+                result['nickname'] = SEPARATED_NICKNAME[1]
+                print(result)
+                return result
+    except Exception as e:
+        print(e)
+        return False
 
 
 if __name__ == '__main__':
     """local test"""
     _PREPARED = [
-        'Кузьмин анТОН денисович им-271',
-        'Кузьмин Антон денисович им271',
-        'Кузьмин Антон им271',
-        'кузьмин антон денисович',
+        'Кузьмин анТОН денисович им-271\nAnton13yo',
+        'Кузьмин Антон денисович им271\nAnton13yo',
+        'Кузьмин Антон им271\nAnton13yo',
+        'кузьмин антон денисович\nAnton13yo',
         ''
     ]
 

@@ -16,53 +16,68 @@ limitations under the License.
 
 """
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+# noinspection PyUnresolvedReferences
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+_BASE: any = declarative_base()
 
 
-class Student(Base):
-    """
-    **Student Model**
+class Team(_BASE):
+    """Team Model
 
-    Model representing a student with the following fields:
+    Model representing a team with the following fields:
 
     - ``id: Integer``
     - ``url: String``
-    - ``surname: String``
     - ``name: String``
-    - ``patronymic: String``
-    - ``group: String``
+    - ``leader: JSON``
+    - ``members: JSON``
     - ``valid: Integer``
-    - ``location: String``
+
     """
-    __tablename__ = 'students'
+    __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
     url = Column(String)
-    surname = Column(String)
     name = Column(String)
-    patronymic = Column(String)
-    group = Column(String)
+    leader = Column(JSON)
+    members = Column(JSON)
     valid = Column(Integer)
-    location = Column(String)
 
+    def __repr__(self) -> str:
+        return (f'<Team('
+                f'id={self.id}, '
+                f'url={self.url}, '
+                f'name={self.name}, '
+                f'leader={self.leader}, '
+                f'members={self.members}, '
+                f'valid={self.valid}>')
 
-class Bracket(Base):
-    """
-    **Bracket Model**
-
-    Model representing a bracket with the following fields:
-
-    - ``id: Integer``
-    - ``tour: Integer``
-    - ``student_1: Integer``
-    - ``student_2: Integer``
-    - ``winner: Integer``
-    """
-    __tablename__ = 'brackets'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    tour = Column(Integer, nullable=False)
-    student_1 = Column(Integer, ForeignKey('students.id'))
-    student_2 = Column(Integer, ForeignKey('students.id'))
-    winner = Column(Integer, ForeignKey('students.id'))
+# class Bracket(_BASE):
+#     """Bracket Model
+#
+#     Model representing a bracket with the following fields:
+#
+#     - ``id: Integer``
+#     - ``tour: Integer``
+#     - ``student_1: Integer``
+#     - ``student_2: Integer``
+#     - ``winner: Integer``
+#
+#     """
+#     __tablename__ = 'brackets'
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     tour = Column(Integer, nullable=False)
+#     level = Column(Integer, nullable=False)
+#     student_1 = Column(Integer, ForeignKey('students.id'))
+#     student_2 = Column(Integer, ForeignKey('students.id'))
+#     winner = Column(Integer, ForeignKey('students.id'))
+#
+#     def __repr__(self):
+#         return (f"<Bracket("
+#                 f"id={self.id},"
+#                 f"tour={self.tour},"
+#                 f"level={self.level},"
+#                 f"student_1={self.student_1},"
+#                 f"student_2={self.student_2},"
+#                 f"winner={self.winner})>")

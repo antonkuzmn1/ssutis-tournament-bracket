@@ -31,14 +31,14 @@ class MessageTimeoutChecker:
         :param update:
         :return: boolean
         """
-        user_id = update.message.from_user.id
-        current_time = update.message.date.timestamp()
+        ID = update.message.from_user.id
+        CURRENT_TIME = update.message.date.timestamp()
 
-        if user_id in self.last_message_time:
-            if current_time - self.last_message_time[user_id] < 60:
+        if ID in self.last_message_time:
+            if CURRENT_TIME - self.last_message_time[ID] < 60:
                 return False
 
-        self.last_message_time[user_id] = current_time
+        self.last_message_time[ID] = CURRENT_TIME
         return True
 
 
